@@ -49,8 +49,9 @@ Apple
 func TestNumSort(t *testing.T) {
 	// читаем данные из файла
 	bytes, errRead := ioutil.ReadFile("numbers.txt")
-	handleError(errRead)
-
+	if errRead != nil {
+		t.Errorf(errRead.Error())
+	}
 	// разбиваем на строки
 	lines := strings.Split(string(bytes), "\n")
 	tableOfStings := make([][]string, len(lines))
@@ -60,27 +61,34 @@ func TestNumSort(t *testing.T) {
 		tableOfStings[i][0] = line
 	}
 
-	var n bool = true
-	var k int = 0
-	var f bool = false
-
-	var r bool = false
-	var u bool = false
-	errSort := sortStrings(tableOfStings, f, r, n, k)
-	handleError(errSort)
+	var options Opts = Opts{
+		Numeric:  true,
+		Key:      0,
+		FoldCase: false,
+		Reverse:  false,
+		Unique:   false,
+	}
+	errSort := sortStrings(tableOfStings, options)
+	if errSort != nil {
+		t.Errorf(errSort.Error())
+	}
 
 	out, err := os.Create("TestNumbers.txt")
 	if err != nil {
-		t.Errorf("Файл не создан")
+		t.Errorf(err.Error())
 	}
 	defer out.Close()
 
-	errWrite := writeStrings(tableOfStings, u, f, k, out)
-	handleError(errWrite)
+	errWrite := writeStrings(tableOfStings, options, out)
+	if errWrite != nil {
+		t.Errorf(errWrite.Error())
+	}
 
 	// читаем данные из файла
 	rbytes, errRead := ioutil.ReadFile("TestNumbers.txt")
-	handleError(errRead)
+	if errRead != nil {
+		t.Errorf(errRead.Error())
+	}
 
 	result := string(rbytes)
 	if result != sortedNum {
@@ -91,7 +99,9 @@ func TestNumSort(t *testing.T) {
 func TestNumSortUniq(t *testing.T) {
 	// читаем данные из файла
 	bytes, errRead := ioutil.ReadFile("numbers.txt")
-	handleError(errRead)
+	if errRead != nil {
+		t.Errorf(errRead.Error())
+	}
 
 	// разбиваем на строки
 	lines := strings.Split(string(bytes), "\n")
@@ -102,29 +112,34 @@ func TestNumSortUniq(t *testing.T) {
 		tableOfStings[i][0] = line
 	}
 
-	var n bool = true
-	var k int = 0
-	var f bool = false
-
-	var r bool = false
-	var u bool = true
-
-	errSort := sortStrings(tableOfStings, f, r, n, k)
-	handleError(errSort)
+	var options Opts = Opts{
+		Numeric:  true,
+		Key:      0,
+		FoldCase: false,
+		Reverse:  false,
+		Unique:   true,
+	}
+	errSort := sortStrings(tableOfStings, options)
+	if errSort != nil {
+		t.Errorf(errSort.Error())
+	}
 
 	out, err := os.Create("TestNumbers2.txt")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		t.Errorf(err.Error())
 	}
 	defer out.Close()
 
-	errWrite := writeStrings(tableOfStings, u, f, k, out)
-	handleError(errWrite)
+	errWrite := writeStrings(tableOfStings, options, out)
+	if errWrite != nil {
+		t.Errorf(errWrite.Error())
+	}
 
 	// читаем данные из файла
 	rbytes, errRead := ioutil.ReadFile("TestNumbers2.txt")
-	handleError(errRead)
+	if errRead != nil {
+		t.Errorf(err.Error())
+	}
 
 	result := string(rbytes)
 	if result != uniqSortedNum {
@@ -135,7 +150,9 @@ func TestNumSortUniq(t *testing.T) {
 func TestNumSortUniqReverse(t *testing.T) {
 	// читаем данные из файла
 	bytes, errRead := ioutil.ReadFile("numbers.txt")
-	handleError(errRead)
+	if errRead != nil {
+		t.Errorf(errRead.Error())
+	}
 
 	// разбиваем на строки
 	lines := strings.Split(string(bytes), "\n")
@@ -146,29 +163,35 @@ func TestNumSortUniqReverse(t *testing.T) {
 		tableOfStings[i][0] = line
 	}
 
-	var n bool = true
-	var k int = 0
-	var f bool = false
+	var options Opts = Opts{
+		Numeric:  true,
+		Key:      0,
+		FoldCase: false,
+		Reverse:  true,
+		Unique:   true,
+	}
 
-	var r bool = true
-	var u bool = true
-
-	errSort := sortStrings(tableOfStings, f, r, n, k)
-	handleError(errSort)
+	errSort := sortStrings(tableOfStings, options)
+	if errSort != nil {
+		t.Errorf(errSort.Error())
+	}
 
 	out, err := os.Create("TestNumbers3.txt")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		t.Errorf(err.Error())
 	}
 	defer out.Close()
 
-	errWrite := writeStrings(tableOfStings, u, f, k, out)
-	handleError(errWrite)
+	errWrite := writeStrings(tableOfStings, options, out)
+	if errWrite != nil {
+		t.Errorf(errWrite.Error())
+	}
 
 	// читаем данные из файла
 	rbytes, errRead := ioutil.ReadFile("TestNumbers3.txt")
-	handleError(errRead)
+	if errRead != nil {
+		t.Errorf(errRead.Error())
+	}
 
 	result := string(rbytes)
 	if result != uniqReverseSortedNum {
@@ -179,7 +202,9 @@ func TestNumSortUniqReverse(t *testing.T) {
 func TestNumSortFailOnText(t *testing.T) {
 	// читаем данные из файла
 	bytes, errRead := ioutil.ReadFile("text.txt")
-	handleError(errRead)
+	if errRead != nil {
+		t.Errorf(errRead.Error())
+	}
 
 	// разбиваем на строки
 	lines := strings.Split(string(bytes), "\n")
@@ -190,22 +215,26 @@ func TestNumSortFailOnText(t *testing.T) {
 		tableOfStings[i][0] = line
 	}
 
-	var n bool = true
-	var k int = 0
-	var f bool = false
-	var r bool = true
+	var options Opts = Opts{
+		Numeric:  true,
+		Key:      0,
+		FoldCase: false,
+		Reverse:  true,
+		Unique:   false,
+	}
 
-	errSort := sortStrings(tableOfStings, f, r, n, k)
-	handleError(errSort)
+	errSort := sortStrings(tableOfStings, options)
 	if errSort != nil {
-		t.Errorf("Test FAIL failed: no error")
+		t.Errorf(errSort.Error())
 	}
 }
 
 func TestSortFUniqReverse(t *testing.T) {
 	// читаем данные из файла
 	bytes, errRead := ioutil.ReadFile("text.txt")
-	handleError(errRead)
+	if errRead != nil {
+		t.Errorf(errRead.Error())
+	}
 
 	// разбиваем на строки
 	lines := strings.Split(string(bytes), "\n")
@@ -215,16 +244,18 @@ func TestSortFUniqReverse(t *testing.T) {
 		tableOfStings[i] = make([]string, 1)
 		tableOfStings[i][0] = line
 	}
+	var options Opts = Opts{
+		Numeric:  false,
+		Key:      0,
+		FoldCase: true,
+		Reverse:  true,
+		Unique:   true,
+	}
 
-	var n bool = false
-	var k int = 0
-	var f bool = true
-
-	var r bool = true
-	var u bool = true
-
-	errSort := sortStrings(tableOfStings, f, r, n, k)
-	handleError(errSort)
+	errSort := sortStrings(tableOfStings, options)
+	if errSort != nil {
+		t.Errorf(errSort.Error())
+	}
 
 	out, err := os.Create("TestSort.txt")
 	if err != nil {
@@ -233,12 +264,16 @@ func TestSortFUniqReverse(t *testing.T) {
 	}
 	defer out.Close()
 
-	errWrite := writeStrings(tableOfStings, u, f, k, out)
-	handleError(errWrite)
+	errWrite := writeStrings(tableOfStings, options, out)
+	if errWrite != nil {
+		t.Errorf(errWrite.Error())
+	}
 
 	// читаем данные из файла
 	rbytes, errRead := ioutil.ReadFile("TestSort.txt")
-	handleError(errRead)
+	if errRead != nil {
+		t.Errorf(errRead.Error())
+	}
 
 	result := string(rbytes)
 	if result != sortedUniqReverseText {

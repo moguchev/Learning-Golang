@@ -6,58 +6,64 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-func handleError(err error) {
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+// Opts -
+type Opts struct {
+	Reverse  bool
+	Numeric  bool
+	Unique   bool
+	FoldCase bool
+	Key      int
+	Output   string
 }
 
-func sortStrings(table [][]string, isF bool, isR bool, isN bool, k int) error {
-	if k < 0 {
+func sortStrings(table [][]string, options Opts) error {
+	if options.Key < 0 {
 		return errors.New("Column under zero")
 	}
 
-	if isN {
-		if isR {
+	if options.Numeric {
+		if options.Reverse {
 			sort.Slice(table, func(i, j int) bool {
-				f1, err := strconv.ParseFloat(table[i][k], 64)
-				handleError(err)
-				f2, err := strconv.ParseFloat(table[j][k], 64)
-				handleError(err)
+				f1, err := strconv.ParseFloat(table[i][options.Key], 64)
+				f2, err := strconv.ParseFloat(table[j][options.Key], 64)
+				if err != nil {
+					return false
+				}
 				return f1 > f2
 			})
 		} else {
 			sort.Slice(table, func(i, j int) bool {
-				f1, err := strconv.ParseFloat(table[i][k], 64)
-				handleError(err)
-				f2, err := strconv.ParseFloat(table[j][k], 64)
-				handleError(err)
+				f1, err := strconv.ParseFloat(table[i][options.Key], 64)
+				f2, err := strconv.ParseFloat(table[j][options.Key], 64)
+				if err != nil {
+					return false
+				}
 				return f1 < f2
 			})
 		}
 	} else {
-		if isF && isR {
+		if options.FoldCase && options.Reverse {
 			sort.Slice(table, func(i, j int) bool {
-				return strings.ToLower(table[i][k]) > strings.ToLower(table[j][k])
+				return strings.ToLower(table[i][options.Key]) > strings.ToLower(table[j][options.Key])
 			})
-		} else if isF && !isR {
+		} else if options.FoldCase && !options.Reverse {
 			sort.Slice(table, func(i, j int) bool {
-				return strings.ToLower(table[i][k]) < strings.ToLower(table[j][k])
+				return strings.ToLower(table[i][options.Key]) < strings.ToLower(table[j][options.Key])
 			})
-		} else if !isF && isR {
+		} else if !options.FoldCase && options.Reverse {
 			sort.Slice(table, func(i, j int) bool {
-				return table[i][k] > table[j][k]
+				return table[i][options.Key] > table[j][options.Key]
 			})
-		} else if !isF && !isR {
+		} else if !options.FoldCase && !options.Reverse {
 			sort.Slice(table, func(i, j int) bool {
-				return table[i][k] < table[j][k]
+				return table[i][options.Key] < table[j][options.Key]
 			})
 		}
 	}
@@ -69,28 +75,29 @@ func printSlice(slice []string, out io.Writer) {
 	fmt.Fprintln(out, strings.Trim(fmt.Sprint(slice), "[]"))
 }
 
-func writeStrings(table [][]string, isU bool, isF bool, k int, out io.Writer) error {
-	if k < 0 {
+func writeStrings(table [][]string, options Opts, out io.Writer) error {
+	if options.Key < 0 {
 		return errors.New("Column under zero")
 	}
 
-	if isU && isF {
+	if options.Unique && options.FoldCase {
 		for i := range table {
-			if i > 0 && strings.ToLower(table[i][k]) != strings.ToLower(table[i-1][k]) {
+			if i > 0 && strings.ToLower(table[i][options.Key]) !=
+				strings.ToLower(table[i-1][options.Key]) {
 				printSlice(table[i], out)
 			} else if i == 0 {
 				printSlice(table[i], out)
 			}
 		}
-	} else if isU && !isF {
+	} else if options.Unique && !options.FoldCase {
 		for i := range table {
-			if i > 0 && table[i][k] != table[i-1][k] {
+			if i > 0 && table[i][options.Key] != table[i-1][options.Key] {
 				printSlice(table[i], out)
 			} else if i == 0 {
 				printSlice(table[i], out)
 			}
 		}
-	} else if !isU {
+	} else if !options.Unique {
 		for i := range table {
 			printSlice(table[i], out)
 		}
@@ -108,20 +115,30 @@ func main() {
 
 	flag.Parse()
 	args := flag.Args()
+	var options Opts = Opts{
+		FoldCase: *fPtr,
+		Unique:   *uPtr,
+		Reverse:  *rPtr,
+		Numeric:  *nPtr,
+		Output:   *oPtr,
+		Key:      *kPtr,
+	}
+
 	if len(args) == 0 {
-		fmt.Println("No arguments")
-		os.Exit(1)
+		log.Fatal("No arguments")
 	}
 
 	// читаем данные из файла
 	bytes, errRead := ioutil.ReadFile(args[0])
-	handleError(errRead)
+	if errRead != nil {
+		log.Fatal(errRead)
+	}
 
 	// разбиваем на строки
 	lines := strings.Split(string(bytes), "\n")
 	tableOfStings := make([][]string, len(lines))
 	for i, line := range lines {
-		if *kPtr > 0 {
+		if options.Key > 0 {
 			tableOfStings[i] = strings.Split(line, " ")
 		} else {
 			tableOfStings[i] = make([]string, 1)
@@ -130,11 +147,13 @@ func main() {
 	}
 
 	// пользователь ведёт нумерацию с 1
-	if *kPtr > 0 {
-		*kPtr = *kPtr - 1
+	if options.Key > 0 {
+		options.Key--
 	}
-	errSort := sortStrings(tableOfStings, *fPtr, *rPtr, *nPtr, *kPtr)
-	handleError(errSort)
+	errSort := sortStrings(tableOfStings, options)
+	if errSort != nil {
+		log.Fatal(errSort)
+	}
 
 	if *oPtr != "" {
 		out, err := os.Create(*oPtr)
@@ -143,10 +162,14 @@ func main() {
 			os.Exit(1)
 		}
 		defer out.Close()
-		errWrite := writeStrings(tableOfStings, *uPtr, *fPtr, *kPtr, out)
-		handleError(errWrite)
+		errWrite := writeStrings(tableOfStings, options, nil)
+		if errWrite != nil {
+			log.Fatal(errWrite)
+		}
 	} else {
-		errWrite := writeStrings(tableOfStings, *uPtr, *fPtr, *kPtr, os.Stdout)
-		handleError(errWrite)
+		errWrite := writeStrings(tableOfStings, options, os.Stdout)
+		if errWrite != nil {
+			log.Fatal(errWrite)
+		}
 	}
 }
