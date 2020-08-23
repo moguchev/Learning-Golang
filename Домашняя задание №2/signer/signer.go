@@ -103,6 +103,7 @@ func MultiHash(in, out chan interface{}) {
 // CombineResults ...
 func CombineResults(in, out chan interface{}) {
 	var wgr sync.WaitGroup
+	var mx sync.RWMutex
 	result := make([]string, 0)
 	for step2 := range in {
 		wgr.Add(1)
@@ -112,7 +113,9 @@ func CombineResults(in, out chan interface{}) {
 				fmt.Print(data)
 				fmt.Print(" : ")
 				fmt.Println(len(result))
+				mx.Lock()
 				result = append(result, data)
+				mx.Unlock()
 			}
 			wgr.Done()
 		}(step2)
