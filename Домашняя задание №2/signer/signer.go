@@ -110,10 +110,8 @@ func CombineResults(in, out chan interface{}) {
 		go func(step2 interface{}) {
 			data, ok := step2.(string)
 			if ok {
-				fmt.Print(data)
-				fmt.Print(" : ")
-				fmt.Println(len(result))
 				mx.Lock()
+				fmt.Println(data, " : ", len(result))
 				result = append(result, data)
 				mx.Unlock()
 			}
